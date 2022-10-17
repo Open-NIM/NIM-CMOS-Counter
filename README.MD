@@ -1,1 +1,5 @@
-Template repo for firmware files.
+# Open-NIM Counter firmware
+Firmware for the Open-NIM counter module.
+
+## Authors
+Leonardo Lisa

@@ -189,7 +189,7 @@ void readCounter2() {
   counter2 += (PINK << 24);
 }
 
-uint8_t getCommand() {
+command getCommand() {
   char _buffer[COMMAND_LENGTH]{};
   
   if(Serial.available() >= COMMAND_LENGTH) {
@@ -203,7 +203,7 @@ uint8_t getCommand() {
   
   for(uint8_t j{}; j < COMMANDS_COUNT; ++j) {
     // Is a valid command.
-    if(!strncmp(_buffer, commands[j], COMMAND_LENGTH)) {
+    if(!(strncmp(_buffer, commands[j], COMMAND_LENGTH))) {
       return j;
     }
   }

@@ -48,7 +48,17 @@
 #define DISPLAY
 
 enum constants : uint8_t {COMMAND_LENGTH = 4, COMMANDS_COUNT = 8, USART_TIMEOUT = 100};
-enum commands : uint8_t {RSTA, RST1, RST2, GET1, GET2, EN_1, EN_2, SRLN, NO_COMMAND, COMMAND_ERR};
+enum command : uint8_t {
+	RSTA, //Reset all counters
+	RST1, //Reset the first counter
+	RST2, //Reset the second counter
+	GET1, //Get the value of the first counter
+	GET2, //Get the value of the second counter
+	EN_1, //Check whether the first counter is in remote mode
+	EN_2, //Check whether the second counter is in remote mode
+	SRLN, //Return the serial number of the module
+	NO_COMMAND, COMMAND_ERR
+};
 
 //Underscores before Defines and variable names are bad. User defined global variables, defines and enum values are supposed to be without underscore.
 enum pins : uint8_t{
@@ -115,7 +125,7 @@ enum pins : uint8_t{
   U8G2_SSD1306_128X64_NONAME_F_4W_SW_SPI u8g2(U8G2_R0, /* clock=*/ _D0, /* data=*/ _D1, /* cs=*/ _CS, /* dc=*/ _DC, /* reset=*/ _RES);
 #endif
 
-constexpr char commands[COMMANDS_COUNT][COMMAND_LENGTH] = {
+constexpr char commands[COMMANDS_COUNT][COMMAND_LENGTH]{
 	"RSTA",
 	"RST1",
 	"RST2",
@@ -138,7 +148,7 @@ void resetCounter2();
 void readCounter1();
 void readCounter2();
 
-uint8_t getCommand(); 
+command getCommand(); 
 void USART_Flush();
 void USART_Hard_Flush();
 

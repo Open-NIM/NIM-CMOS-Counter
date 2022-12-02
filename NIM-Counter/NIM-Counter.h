@@ -47,7 +47,7 @@
 
 #define DISPLAY
 
-enum constants : uint8_t {COMMAND_LENGTH = 4, COMMANDS_COUNT = 7, USART_TIMEOUT = 100};
+enum constants : uint8_t {COMMAND_LENGTH = 4, COMMANDS_COUNT = 8, USART_TIMEOUT = 100};
 enum commands : uint8_t {RSTA, RST1, RST2, GET1, GET2, EN_1, EN_2, SRLN, NO_COMMAND, COMMAND_ERR};
 
 //Underscores before Defines and variable names are bad. User defined global variables, defines and enum values are supposed to be without underscore.
@@ -122,8 +122,8 @@ constexpr char commands[COMMANDS_COUNT][COMMAND_LENGTH] = {
 	"GET1",
 	"GET2",
 	"EN_1",
-	"EN_2"//,
-	//"SRLN" //,
+	"EN_2",
+	"SRLN" //,
 	// "TEST"
 };
 
@@ -133,7 +133,8 @@ volatile uint32_t counter2{};
 void beginCounter();
 void resetCounter1();
 void resetCounter2();
-/* void readCounter(); */
+/* void readCounter(); */ //deleted because below
+//Separated the two read counter functions, when reading one counter it's not necessary to load and prepare everything to read the other too.
 void readCounter1();
 void readCounter2();
 

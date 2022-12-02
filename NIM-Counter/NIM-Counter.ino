@@ -48,14 +48,14 @@ void loop() {
 		// Read counter 1
 		case GET1:
 			readCounter1();
-			for(uint8_t i{3}; i>0; --i) Serial.write((counter1 >> (i*8)) & 255);
+			for(uint8_t i{4}; i>0; --i) Serial.write((counter1 >> (i*8)) & 255);
 			Serial.write('\n');
 			break;
 
 		// Read counter 2
 		case GET2:
 			readCounter2();
-			for(uint8_t i{3}; i>0; --i) Serial.write((counter2 >> (i*8)) & 255);
+			for(uint8_t i{4}; i>0; --i) Serial.write((counter2 >> (i*8)) & 255);
 			Serial.write('\n');
 			break;
 
@@ -71,7 +71,7 @@ void loop() {
 			Serial.write('\n');
 			break;
 		case SRLN:
-			for(uint8_t i{7}; i > 0; --i) Serial.write(0);			
+			for(uint8_t i{8}; i > 0; --i) Serial.write(0);			
 			Serial.write('\n');
 			break;
 		case COMMAND_ERR:

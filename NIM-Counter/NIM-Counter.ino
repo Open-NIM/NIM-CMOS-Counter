@@ -17,6 +17,7 @@
 #define COMMANDS_COUNT 7
 #define USART_TIMEOUT 100
 
+#define DISPLAY
 
 #define _RES 44   //res PL5 
 #define _DC 45    //dc PL4 
@@ -49,8 +50,9 @@
 
 #define SELF_TEST_PIN 49
 
-
-U8G2_SSD1306_128X64_NONAME_F_4W_SW_SPI u8g2(U8G2_R0, /* clock=*/ _D0, /* data=*/ _D1, /* cs=*/ _CS, /* dc=*/ _DC, /* reset=*/ _RES);
+#ifdef DISLAY
+  U8G2_SSD1306_128X64_NONAME_F_4W_SW_SPI u8g2(U8G2_R0, /* clock=*/ _D0, /* data=*/ _D1, /* cs=*/ _CS, /* dc=*/ _DC, /* reset=*/ _RES);
+#endif
 
 const char commands[COMMANDS_COUNT][COMMAND_LENGTH] = {
   "RSTA",
@@ -63,8 +65,8 @@ const char commands[COMMANDS_COUNT][COMMAND_LENGTH] = {
   // "TEST"
   };
 
-volatile uint64_t counter1 = 0;
-volatile uint64_t counter2 = 0;
+volatile uint32_t counter1 = 0; //uint64_t
+volatile uint32_t counter2 = 0;
 
 void beginCounter(void);
 void resetCounter1(void);
@@ -84,10 +86,13 @@ void setup() {
   
   beginCounter();
   Serial.begin(9600);
-  u8g2.begin();
-  // randomSeed(analogRead(0));
-  u8g2.enableUTF8Print();
 
+#ifdef DISLAY
+    u8g2.begin();
+    u8g2.enableUTF8Print();
+#endif
+
+    // randomSeed(analogRead(0));  
 }
 
 void loop() {
@@ -96,26 +101,32 @@ void loop() {
   switch(cmd) {
     // Reset all
     case 0:
-      Serial.println("RSTA");
+      // Serial.println("RSTA");
+      resetCounter1();
+      resetCounter2();
     break;
     
     // Reset counter 1
     case 1:
-      Serial.println("RST1");
+      // Serial.println("RST1");
+      resetCounter1();
     break;
 
     // Reset counter 2
     case 2:
-      Serial.println("RST2");
+      //Serial.println("RST2");
+      resetCounter2();
     break;
     
     // Read counter 1
     case 3:
+      readCounter();
       Serial.println(counter1);
     break;
 
     // Read counter 2
     case 4:
+      readCounter();
       Serial.println(counter2);
     break;
     
@@ -136,32 +147,38 @@ void loop() {
   }
   
   //USART_Hard_Flush();
-  
-  u8g2.firstPage();
-  do {
-    /* all graphics commands have to appear within the loop body. */
-    u8g2.setFont(u8g2_font_crox2hb_tr);
-    u8g2.setCursor(0, 15);
-    u8g2.print(F("Counter 1"));
-    u8g2.setCursor(0, 30);
-    u8g2.print(counter1);
-    u8g2.setCursor(0, 45);
-    u8g2.print(F("Counter 2"));
-    u8g2.setCursor(0, 60);
-    u8g2.print(counter2);
-    u8g2.drawFrame(0, 0, 128, 64);
-  } while ( u8g2.nextPage() );
 
+#ifdef DISLAY
+    u8g2.firstPage();
+    do {
+      /* all graphics commands have to appear within the loop body. */
+      u8g2.setFont(u8g2_font_crox2hb_tr);
+      u8g2.setCursor(0, 15);
+      u8g2.print(F("Counter 1"));
+      u8g2.setCursor(0, 30);
+      u8g2.print(counter1);
+      u8g2.setCursor(0, 45);
+      u8g2.print(F("Counter 2"));
+      u8g2.setCursor(0, 60);
+      u8g2.print(counter2);
+      u8g2.drawFrame(0, 0, 128, 64);
+    } while ( u8g2.nextPage() );
+#endif
+
+  // Debug
   // counter1 += random(10);
   // counter2 += random(50);
+  // readCounter();
+  // Serial.println(counter1);
+  // Serial.println(counter2);
+  // delay(1000);
+  
+  /*
   for(int i = 0; i < 10; i++) {
     digitalWrite(SELF_TEST_PIN, HIGH);
     digitalWrite(SELF_TEST_PIN, LOW);
   }
-  
-  readCounter();
-  
-  delay(500);
+  */
 }
 
 void beginCounter(void) {
@@ -195,39 +212,39 @@ void resetCounter2(void) {
 void readCounter(void) {
   /* Latch counter1 data in internal register */
   digitalWrite(_LATCH1, HIGH);
-  delayMicroseconds(10);
+  //delayMicroseconds(10);
   digitalWrite(_LATCH1, LOW);
   
   /* Latch counter2 data in internal register */
   digitalWrite(_LATCH2, HIGH);
-  delayMicroseconds(10);
-  digitalWrite(_LATCH1, LOW);
+  //delayMicroseconds(10);
+  digitalWrite(_LATCH2, LOW);
   
   /* Read counter1*/
-  PORTA = 1 << (_GAL_1);
-  counter1 = PINA;
+  PORTA = ~(1 << (_GAL_1));
+  counter1 = PINK;
 
-  PORTA = 1 << (_GAU_1);
-  counter1 += (PINA << 8);
+  PORTA = ~(1 << (_GAU_1));
+  counter1 += (PINK << 8);
 
-  PORTA = 1 << (_GBL_1);
-  counter1 += (PINA << 16);
+  PORTA = ~(1 << (_GBL_1));
+  counter1 += (PINK << 16);
 
-  PORTA = 1 << (_GBU_1);
-  counter1 += (PINA << 24);
+  PORTA = ~(1 << (_GBU_1));
+  counter1 += (PINK << 24);
 
   /* Read counter2*/
-  PORTA = 1 << (_GAL_2);
-  counter2 = PINA;
+  PORTA = ~(1 << (_GAL_2));
+  counter2 = PINK;
 
-  PORTA = 1 << (_GAU_2);
-  counter2 += (PINA << 8);
+  PORTA = ~(1 << (_GAU_2));
+  counter2 += (PINK << 8);
 
-  PORTA = 1 << (_GBL_2);
-  counter2 += (PINA << 16);
+  PORTA = ~(1 << (_GBL_2));
+  counter2 += (PINK << 16);
 
-  PORTA = 1 << (_GBU_2);
-  counter2 += (PINA << 24);
+  PORTA = ~(1 << (_GBU_2));
+  counter2 += (PINK << 24);
 }
 
 uint8_t getCommand(void) {

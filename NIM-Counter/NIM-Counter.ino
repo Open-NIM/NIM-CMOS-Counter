@@ -1,84 +1,5 @@
-#define U8G2_WITHOUT_FONT_ROTATION
-
-#include <avr/io.h>
-
-#include <Arduino.h>
-#include <U8g2lib.h>
-
-#ifdef U8X8_HAVE_HW_SPI
-#include <SPI.h>
-#endif
-#ifdef U8X8_HAVE_HW_I2C
-#include <Wire.h>
-#endif
-
-
-#define COMMAND_LENGTH 4
-#define COMMANDS_COUNT 7
-#define USART_TIMEOUT 100
-
-#define DISPLAY
-
-#define _RES 44   //res PL5 
-#define _DC 45    //dc PL4 
-#define _D1 46    //d1 PL3 
-#define _D0 47    //d0 PL2 
-#define _CS 48    //cs PL1 
-
-#define _Y7 82  //PK7
-#define _Y6 83  //PK6
-#define _Y5 84  //PK5
-#define _Y4 85  //PK4
-#define _Y3 86  //PK3
-#define _Y2 87  //PK2
-#define _Y1 88  //PK1
-#define _Y0 89  //PK0
-
-#define _GBU_2 7 //29  //PA7
-#define _GBL_2 6 //28  //PA6
-#define _GAU_2 5 //27  //PA5
-#define _GAL_2 4 //26  //PA4
-#define _GBU_1 3 //25  //PA3
-#define _GBL_1 2 //24  //PA2
-#define _GAU_1 1 //23  //PA1
-#define _GAL_1 0 //22  //PA0
-
-#define _CLR2   34  //PC3
-#define _LATCH2 35  //PC2
-#define _CLR1   36  //PC1
-#define _LATCH1 37  //PC0
-
-#define SELF_TEST_PIN 49
-
-#ifdef DISLAY
-  U8G2_SSD1306_128X64_NONAME_F_4W_SW_SPI u8g2(U8G2_R0, /* clock=*/ _D0, /* data=*/ _D1, /* cs=*/ _CS, /* dc=*/ _DC, /* reset=*/ _RES);
-#endif
-
-const char commands[COMMANDS_COUNT][COMMAND_LENGTH] = {
-  "RSTA",
-  "RST1",
-  "RST2",
-  "GET1",
-  "GET2",
-  "EN_1",
-  "EN_2" //,
-  // "TEST"
-  };
-
-volatile uint32_t counter1 = 0; //uint64_t
-volatile uint32_t counter2 = 0;
-
-void beginCounter(void);
-void resetCounter1(void);
-void resetCounter2(void);
-void readCounter(void);
-
-uint8_t getCommand(void); 
-bool compareArrays(char arr[], int command);
-void USART_Flush(void);
-void USART_Hard_Flush(void);
-
-uint32_t readCounter(uint8_t n);
+/* Copyright (C) 2022 Leonardo Lisa, Alluringbits */
+#include "NIM-Counter.h"
 
 void setup() {
   pinMode(SELF_TEST_PIN, OUTPUT);
@@ -87,7 +8,7 @@ void setup() {
   beginCounter();
   Serial.begin(9600);
 
-#ifdef DISLAY
+#ifdef DISPLAY
     u8g2.begin();
     u8g2.enableUTF8Print();
 #endif
@@ -96,59 +17,76 @@ void setup() {
 }
 
 void loop() {
-  uint8_t cmd = getCommand();
+  /* uint8_t cmd{getCommand()}; */
   
-  switch(cmd) {
-    // Reset all
-    case 0:
-      // Serial.println("RSTA");
-      resetCounter1();
-      resetCounter2();
-    break;
-    
-    // Reset counter 1
-    case 1:
-      // Serial.println("RST1");
-      resetCounter1();
-    break;
+	switch(getCommand()) {
+		// Reset all
+		case RSTA:
+			// Serial.println("RSTA");
+			resetCounter1();
+			resetCounter2();
+			Serial.write(1);
+			Serial.write('\n');
+			break;
 
-    // Reset counter 2
-    case 2:
-      //Serial.println("RST2");
-      resetCounter2();
-    break;
-    
-    // Read counter 1
-    case 3:
-      readCounter();
-      Serial.println(counter1);
-    break;
+		// Reset counter 1
+		case RST1:
+			// Serial.println("RST1");
+			resetCounter1();
+			Serial.write(1);
+			Serial.write('\n');
+			break;
 
-    // Read counter 2
-    case 4:
-      readCounter();
-      Serial.println(counter2);
-    break;
-    
-    // Remote control counter 1
-    case 5:
-      Serial.println("EN_1");
-    break;
+		// Reset counter 2
+		case RST2:
+			//Serial.println("RST2");
+			resetCounter2();
+			Serial.write(1);
+			Serial.write('\n');
+			break;
 
-    // Remote control counter 2
-    case 6:
-      Serial.println("EN_2");
-    break;
+		// Read counter 1
+		case GET1:
+			readCounter1();
+			for(uint8_t i{3}; i>0; --i) Serial.write((counter1 >> (i*8)) & 255);
+			Serial.write('\n');
+			break;
 
-    case 7:
-      USART_Hard_Flush();
-      Serial.println("ERR!");
-    break;
+		// Read counter 2
+		case GET2:
+			readCounter2();
+			for(uint8_t i{3}; i>0; --i) Serial.write((counter2 >> (i*8)) & 255);
+			Serial.write('\n');
+			break;
+
+		// Remote control counter 1
+		case EN_1:
+			Serial.write(1);
+			Serial.write('\n');
+			break;
+
+		// Remote control counter 2
+		case EN_2:
+			Serial.write(1);
+			Serial.write('\n');
+			break;
+		case SRLN:
+			for(uint8_t i{7}; i > 0; --i) Serial.write(0);			
+			Serial.write('\n');
+			break;
+		case COMMAND_ERR:
+			USART_Hard_Flush();
+			Serial.println("ERR!");
+			break;
+
+		case NO_COMMAND:
+		default:
+			break;
   }
   
   //USART_Hard_Flush();
 
-#ifdef DISLAY
+#ifdef DISPLAY
     u8g2.firstPage();
     do {
       /* all graphics commands have to appear within the loop body. */
@@ -181,7 +119,7 @@ void loop() {
   */
 }
 
-void beginCounter(void) {
+void beginCounter() {
   DDRK = 0x00;  // Set port K direction as input.
   DDRA = 0xff;  // Set port A direction as output.
   DDRC |= 0x0f; // Set port C direction as output.
@@ -197,41 +135,45 @@ void beginCounter(void) {
   resetCounter2();
 }
 
-void resetCounter1(void) {
+void resetCounter1() {
   digitalWrite(_CLR1, LOW);
   delayMicroseconds(10);
   digitalWrite(_CLR1, HIGH);
 }
 
-void resetCounter2(void) {
+void resetCounter2() {
   digitalWrite(_CLR2, LOW);
   delayMicroseconds(10);
   digitalWrite(_CLR2, HIGH);
 }
 
-void readCounter(void) {
-  /* Latch counter1 data in internal register */
-  digitalWrite(_LATCH1, HIGH);
-  //delayMicroseconds(10);
-  digitalWrite(_LATCH1, LOW);
+void readCounter1(){
+	/* Latch counter1 data in internal register */
+	digitalWrite(_LATCH1, HIGH);
+	//delayMicroseconds(10);
+	digitalWrite(_LATCH1, LOW);
+
+	/* Read counter1*/
+	PORTA = ~(1 << (_GAL_1));
+	counter1 = PINK;
+
+	PORTA = ~(1 << (_GAU_1));
+	counter1 += (PINK << 8);
+
+	PORTA = ~(1 << (_GBL_1));
+	counter1 += (PINK << 16);
+
+	PORTA = ~(1 << (_GBU_1));
+	counter1 += (PINK << 24);
+}
+
+void readCounter2() {
   
   /* Latch counter2 data in internal register */
   digitalWrite(_LATCH2, HIGH);
   //delayMicroseconds(10);
   digitalWrite(_LATCH2, LOW);
   
-  /* Read counter1*/
-  PORTA = ~(1 << (_GAL_1));
-  counter1 = PINK;
-
-  PORTA = ~(1 << (_GAU_1));
-  counter1 += (PINK << 8);
-
-  PORTA = ~(1 << (_GBL_1));
-  counter1 += (PINK << 16);
-
-  PORTA = ~(1 << (_GBU_1));
-  counter1 += (PINK << 24);
 
   /* Read counter2*/
   PORTA = ~(1 << (_GAL_2));
@@ -247,39 +189,32 @@ void readCounter(void) {
   counter2 += (PINK << 24);
 }
 
-uint8_t getCommand(void) {
-  char _buffer[COMMAND_LENGTH];
+uint8_t getCommand() {
+  char _buffer[COMMAND_LENGTH]{};
   
   if(Serial.available() >= COMMAND_LENGTH) {
-    for(uint8_t i = 0; i < COMMAND_LENGTH; i++) {
+    for(uint8_t i{}; i < COMMAND_LENGTH; ++i) {
       _buffer[i] = Serial.read();
     }
     USART_Hard_Flush();
   }else{
-    return 8;
-    }
+    return NO_COMMAND;
+	}
   
-  for(uint8_t j = 0; j < COMMANDS_COUNT; j++) {
+  for(uint8_t j{}; j < COMMANDS_COUNT; ++j) {
     // Is a valid command.
-    if(compareArrays(_buffer, j)) {
+    if(!strncmp(_buffer, commands[j], COMMAND_LENGTH)) {
       return j;
     }
   }
 
   // Is an invalid command
-  return COMMANDS_COUNT;
+  return COMMAND_ERR;
 }
 
-bool compareArrays(char arr[], int command) {
-  for(uint8_t i = 0; i < COMMAND_LENGTH; i++) {
-    if (commands[command][i] != arr[i]) return false;
-  }
-  return true;
-}
-
-void USART_Flush(void) {
-  volatile unsigned char dummy;
-  long lastMillis = millis();
+void USART_Flush() {
+  volatile unsigned char dummy{};
+  long lastMillis{millis()};
   
   while(UCSR0A & (1<<RXC0)) {
     dummy = UDR0;
@@ -289,8 +224,8 @@ void USART_Flush(void) {
   }
 }
 
-void USART_Hard_Flush(void) {
-  long lastMillis;
+void USART_Hard_Flush() {
+  long lastMillis{};
   
   Serial.flush(); // Flush serial output buffer.
   USART_Flush();  // Flush serial input buffer register.

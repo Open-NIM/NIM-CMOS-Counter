@@ -17,7 +17,7 @@
 #define COMMANDS_COUNT 7
 #define USART_TIMEOUT 100
 
-#define DISPLAY
+#define DISPLAY 1
 
 #define _RES 44   //res PL5 
 #define _DC 45    //dc PL4 
@@ -50,7 +50,7 @@
 
 #define SELF_TEST_PIN 49
 
-#ifdef DISLAY
+#ifdef DISPLAY
   U8G2_SSD1306_128X64_NONAME_F_4W_SW_SPI u8g2(U8G2_R0, /* clock=*/ _D0, /* data=*/ _D1, /* cs=*/ _CS, /* dc=*/ _DC, /* reset=*/ _RES);
 #endif
 
@@ -87,12 +87,10 @@ void setup() {
   beginCounter();
   Serial.begin(9600);
 
-#ifdef DISLAY
+#ifdef DISPLAY
     u8g2.begin();
     u8g2.enableUTF8Print();
 #endif
-
-    // randomSeed(analogRead(0));  
 }
 
 void loop() {
@@ -145,10 +143,12 @@ void loop() {
       Serial.println("ERR!");
     break;
   }
-  
   //USART_Hard_Flush();
 
-#ifdef DISLAY
+  readCounter();
+
+/* 26ms block execution time*/
+#ifdef DISPLAY
     u8g2.firstPage();
     do {
       /* all graphics commands have to appear within the loop body. */
@@ -222,29 +222,29 @@ void readCounter(void) {
   
   /* Read counter1*/
   PORTA = ~(1 << (_GAL_1));
-  counter1 = PINK;
+  counter1 = (uint32_t)(PINK);
 
   PORTA = ~(1 << (_GAU_1));
-  counter1 += (PINK << 8);
+  counter1 += ((uint32_t)(PINK) << 8);
 
   PORTA = ~(1 << (_GBL_1));
-  counter1 += (PINK << 16);
+  counter1 += ((uint32_t)(PINK) << 16);
 
   PORTA = ~(1 << (_GBU_1));
-  counter1 += (PINK << 24);
+  counter1 += ((uint32_t)(PINK) << 24);
 
   /* Read counter2*/
   PORTA = ~(1 << (_GAL_2));
-  counter2 = PINK;
+  counter2 = (uint32_t)(PINK);
 
   PORTA = ~(1 << (_GAU_2));
-  counter2 += (PINK << 8);
+  counter2 += ((uint32_t)(PINK) << 8);
 
   PORTA = ~(1 << (_GBL_2));
-  counter2 += (PINK << 16);
+  counter2 += ((uint32_t)(PINK) << 16);
 
   PORTA = ~(1 << (_GBU_2));
-  counter2 += (PINK << 24);
+  counter2 += ((uint32_t)(PINK) << 24);
 }
 
 uint8_t getCommand(void) {

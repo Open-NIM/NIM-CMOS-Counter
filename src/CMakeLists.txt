@@ -15,7 +15,8 @@ target_include_directories(U8g2 PUBLIC "${PROJECT_SOURCE_DIR}/include/U8g2" "${P
 target_link_libraries(U8g2 arduino spi wires )
 
 
+add_library(${NIMLIB} NIM-Counter.cpp)
+target_include_directories(${NIMLIB} PUBLIC "${PROJECT_SOURCE_DIR}/include" "${PROJECT_SOURCE_DIR}/include/arduino")
+target_link_libraries(${NIMLIB} arduino wires spi U8g2 )
 
-# add_executable(NIM-Counter ${arduinoSRC} ${U8g2SRC} U8g2/U8g2lib.cpp U8g2/U8x8lib.cpp SPI/SPI.cpp wire/Wire.cpp wire/utility/twi.c main.cpp)
-# target_include_directories(NIM-Counter PUBLIC "${PROJECT_SOURCE_DIR}/include" "${PROJECT_SOURCE_DIR}/include/U8g2" "${PROJECT_SOURCE_DIR}/include/SPI" "${PROJECT_SOURCE_DIR}/include/wire" "${PROJECT_SOURCE_DIR}/include/U8g2/clib" "${PROJECT_SOURCE_DIR}/include/arduino" "${PROJECT_SOURCE_DIR}/include/wire/utility")
 

@@ -1,8 +1,4 @@
 #include <Arduino.h>
-// Declared weak in Arduino.h to allow user redefinitions.
-
-// Weak empty variant initialization function.
-// may be redefined by variant files.
 
 int main(void)
 {
@@ -15,7 +11,7 @@ int main(void)
 	setup();
 	for (;;) {
 		loop();
-		/* if (serialeventrun) serialeventrun(); */
+		if (serialEventRun) serialEventRun();
 	}
 	return 0;
 }

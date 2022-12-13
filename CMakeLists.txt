@@ -15,6 +15,7 @@ set(ARDUINO "ARDUINO_AVR_MEGA2560")
 set(SECTION_START "3E000")
 set(BOOTLOADER "stk500boot")
 set(NIM ${PROJECT_NAME})
+set(NIMLIB ${NIM}LIB)
 
 set(MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 set(CMAKE_EXPORT_COMPILE_COMMANDS True)
@@ -31,9 +32,9 @@ add_definitions(-DF_CPU=16000000L -DARDUINO=10819 -D${ARDUINO} -DARDUINO_ARCH_AV
 
 
 add_subdirectory(src)
-add_executable(${NIM} src/NIM-Counter.cpp)
-target_include_directories(${NIM} PUBLIC "${PROJECT_SOURCE_DIR}/include" "${PROJECT_SOURCE_DIR}/include/U8g2" "${PROJECT_SOURCE_DIR}/include/SPI" "${PROJECT_SOURCE_DIR}/include/wire" "${PROJECT_SOURCE_DIR}/include/U8g2/clib" "${PROJECT_SOURCE_DIR}/include/arduino")
-target_link_libraries(${NIM} arduino wires spi U8g2)
+add_executable(${NIM} src/main.cpp)
+target_include_directories(${NIM} PUBLIC "${PROJECT_SOURCE_DIR}/include" "${PROJECT_SOURCE_DIR}/include/arduino")
+target_link_libraries(${NIM} arduino ${NIMLIB})
 
 unset(CMAKE_C_FLAGS)
 set(CMAKE_C_STANDARD 99)

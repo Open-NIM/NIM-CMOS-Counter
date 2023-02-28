@@ -423,7 +423,6 @@ uint8_t getCommand(void) {
     for(uint8_t i = 0; i < COMMAND_LENGTH; i++) {
       _buffer[i] = Serial.read();
     }
-    USART_Hard_Flush();
   }else{
     return INVALID_COMMAND;
     }

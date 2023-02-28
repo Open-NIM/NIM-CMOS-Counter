@@ -22,8 +22,8 @@
 
 /* Parameters */
 #define COMMAND_LENGTH 4
-#define COMMANDS_COUNT 12
-#define INVALID_COMMAND 12 // Must be = COMMANDS_COUNT
+#define COMMANDS_COUNT 21
+#define INVALID_COMMAND 21 // Must be = COMMANDS_COUNT
 #define PASS COMMANDS_COUNT + 1
 #define USART_TIMEOUT 100
 
@@ -55,7 +55,18 @@ const char commands[COMMANDS_COUNT][COMMAND_LENGTH] = {
   "DE_2",
   "SRLN",
   "FW_v",
-  "help"
+  "help",
+  "XSTA",
+  "XST1",
+  "XST2",
+  "XET1",
+  "XET2",
+  "XN_1",
+  "XN_2",
+  "XE_1",
+  "XE_2",
+  "XRLN",
+  "XW_v"
   };
 
 volatile uint32_t counter1 = 0; //uint64_t
@@ -171,8 +182,8 @@ void loop() {
 
     // Reset counter 2.
     case 2:
-      Serial.println(F("-> Counter2 Reset"));
       resetCounter2();
+      Serial.println(F("-> Counter2 Reset"));
     break;
     
     // Read counter 1.
@@ -260,6 +271,88 @@ void loop() {
       Serial.println(F("    SRLN: get serial number"));
       Serial.println(F("    FW_v: get firmware version"));
       Serial.println(F("    help: you are here ;)"));
+    break;
+
+    // Remote: reset all.
+    case 12:
+      resetCounter1();
+      resetCounter2();
+    break;
+    
+    // Remote: reset counter 1.
+    case 12:
+      resetCounter1();
+    break;
+
+    // Remote: reset counter 2.
+    case 13:
+      resetCounter2();
+    break;
+    
+    // Remote: read counter 1.
+    case 14:
+      readCounter();
+      Serial.write(counter1); Serial.println();
+    break;
+
+    // Remote: read counter 2.
+    case 15:
+      readCounter();
+      Serial.write(counter2); Serial.println();
+    break;
+    
+    // Remote: remote enable counter 1.
+    case 16:
+      if(en_status_ch1 == SELECT_REMOTE) {
+        digitalWrite(EN_CH1, HIGH);
+        remote_en_ch1 = 1;
+        Serial.println(true);
+        }else{
+          Serial.println(false);
+          }
+    break;
+
+    // Remote: remote enable counter 2.
+    case 17:
+      if(en_status_ch2 == SELECT_REMOTE) {
+        digitalWrite(EN_CH2, HIGH);
+        remote_en_ch2 = 1;
+        Serial.println(true);
+        }else{
+          Serial.println(false);
+          }
+    break;
+
+    // Remote: remote disable counter 1.
+    case 18:
+      if(en_status_ch1 == SELECT_REMOTE) {
+        digitalWrite(EN_CH1, LOW);
+        remote_en_ch1 = 0;
+        Serial.println(true);
+        }else{
+          Serial.println(false);
+          }
+    break;
+
+    // Remote: remote disable counter 2.
+    case 19:
+      if(en_status_ch2 == SELECT_REMOTE) {
+        digitalWrite(EN_CH2, LOW);
+        remote_en_ch2 = 0;
+        Serial.println(true);
+        }else{
+          Serial.println(false);
+          }
+    break;
+
+    // Remote: get serial number.
+    case 20:
+      Serial.println(SERIAL_NUMBER);
+    break;
+
+    // Remote: get firmware version.
+    case 21:
+      Serial.println(FW_VERSION);
     break;
 
     // Invalid command.

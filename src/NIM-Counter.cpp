@@ -30,8 +30,8 @@
 #define DEBOUNCING_TIME 150
 
 #define SELECT_TRUE   0
-#define SELECT_LOCAL  2
 #define SELECT_REMOTE 1
+#define SELECT_LOCAL  2
 
 #define SERIAL_NUMBER F("0001")
 #define FW_VERSION F("1.00")
@@ -163,7 +163,7 @@ void loop() {
     break;
   }
 
-  /*Serial comunication */
+  /* Serial comunication */
   uint8_t cmd = getCommand();
 
   switch(cmd) {
@@ -448,7 +448,6 @@ void beginCounter(void) {
   EICRA = 0xff; // INT0, INT1, INT2, INT3 set on rising edge.
   EICRB = (1 << ISC50)|(1 << ISC40); // INT4, INT5 set on any logical chage.
   EIMSK |= (1 << INT5)|(1 << INT4)|(1 << INT3)|(1 << INT2)|(1 << INT1)|(1 << INT0); // enable interrupts.
-
   sei();
   
   resetCounter1();

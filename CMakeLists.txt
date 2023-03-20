@@ -17,7 +17,7 @@ set(BOOTLOADER "stk500boot")
 set(NIM ${PROJECT_NAME})
 set(NIMLIB ${NIM}LIB)
 
-set(MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 set(CMAKE_EXPORT_COMPILE_COMMANDS True)
 # set(CMAKE_VERBOSE_MAKEFILE True)
 
@@ -35,40 +35,45 @@ add_subdirectory(src)
 add_executable(${NIM} src/main.cpp)
 target_include_directories(${NIM} PUBLIC "${PROJECT_SOURCE_DIR}/include" "${PROJECT_SOURCE_DIR}/include/arduino")
 target_link_libraries(${NIM} arduino ${NIMLIB})
+add_custom_command(
+	TARGET ${NIM}
+	POST_BUILD
+	COMMAND avr-objcopy ARGS -O ihex -R .eeprom ${NIM} ${PROJECT_NAME}.hex
+	DEPENDS ${NIM}
+)
 
+set(CMAKE_VERBOSE_MAKEFILE True)
 unset(CMAKE_C_FLAGS)
 set(CMAKE_C_STANDARD 99)
-set(CMAKE_C_FLAGS " -gdwarf-2 -Os -funsigned-char -funsigned-bitfields -fpack-struct -fshort-enums -fno-jump-tables -lm -MD -MP -MF -Wall -Wstrict-prototypes -Wl,--section-start=.text=E000 -mmcu=atmega2560 ")
-add_executable(${BOOTLOADER} ${BOOTLOADER}-bootloader/${BOOTLOADER}.c)
+add_definitions(-D_MEGA_BOARD)
+set(CMAKE_C_FLAGS " -gdwarf-2 -Os -funsigned-char -funsigned-bitfields -fpack-struct -fshort-enums -fno-jump-tables -Wa,-adhlns=stk500boot.lst -lm  -Wall -Wstrict-prototypes -Wl,--section-start=.text=E000 -mmcu=atmega2560 -Wl,-Map=stk500boot.map,--cref ")
+add_executable(${BOOTLOADER}.elf ${BOOTLOADER}-bootloader/${BOOTLOADER}.c)
+add_dependencies(${BOOTLOADER}.elf ${NIM})
 # add_custom_command(
 # 	TARGET NIM-Counter
 # 	POST_BUILD
 # 	COMMAND avr-objcopy ARGS -O ihex -j .eeprom --set-section-flags=.eeprom=alloc,load --no-change-warnings --change-section-lma .eeprom=0 NIM-Counter ${PROJECT_NAME}.eep
 # )
 add_custom_command(
-	TARGET ${NIM}
+	TARGET ${BOOTLOADER}.elf
 	POST_BUILD
-	COMMAND avr-objcopy ARGS -O ihex -R .eeprom ${NIM} ${PROJECT_NAME}.hex
+	COMMAND avr-objcopy ARGS -O ihex -R .eeprom ${BOOTLOADER}.elf ${BOOTLOADER}.hex
 )
 add_custom_command(
-	TARGET ${BOOTLOADER}
-	POST_BUILD
-	COMMAND avr-objcopy ARGS -O ihex -R .eeprom ${BOOTLOADER} ${BOOTLOADER}.hex
-)
-add_custom_command(
-	TARGET ${NIM} ${BOOTLOADER}
+	TARGET ${BOOTLOADER}.elf
 	POST_BUILD
 	COMMAND echo ARGS ":020000040000FA" > ${PROJECT_NAME}.with-bootloader.tmp.hex
 	COMMAND head ARGS -n -1 ${PROJECT_NAME}.hex >> ${PROJECT_NAME}.with-bootloader.tmp.hex 
 	COMMAND echo ARGS ":020000040003F7" >>  ${PROJECT_NAME}.with-bootloader.tmp.hex
 	COMMAND head ARGS -n -2 ${BOOTLOADER}.hex >> ${PROJECT_NAME}.with-bootloader.tmp.hex
-	COMMAND echo ARGS ":040000030003E00019" >> ${PROJECT_NAME}.with-bootloader.tmp.hex
+	COMMAND echo ARGS ":040000030003E00016" >> ${PROJECT_NAME}.with-bootloader.tmp.hex
 	COMMAND echo ARGS ":00000001FF" >> ${PROJECT_NAME}.with-bootloader.tmp.hex
 	COMMAND sed  ARGS 's/\r//' ${PROJECT_NAME}.with-bootloader.tmp.hex > ${PROJECT_NAME}.with-bootloader.hex
+	DEPENDS ${NIM} ${BOOTLOADER}.elf 
 )
 
 set_property(
-	TARGET ${NIM} ${BOOTLOADER}
+	TARGET ${NIM} ${BOOTLOADER}.elf
 	APPEND
 	PROPERTY ADDITIONAL_CLEAN_FILES ${PROJECT_NAME}.with-bootloader.tmp.hex ${PROJECT_NAME}.with-bootloader.hex ${PROJECT_NAME}.hex ${BOOTLOADER}.hex
 )

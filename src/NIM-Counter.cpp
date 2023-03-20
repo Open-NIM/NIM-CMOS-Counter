@@ -8,7 +8,7 @@ void setup() {
 	beginCounter();
 	Serial.begin(9600);
 
-#ifdef DISPLAY
+#ifdef COUNTER_DISPLAY
 	u8g2.begin();
 	u8g2.enableUTF8Print();
 #endif
@@ -19,6 +19,7 @@ void setup() {
 void loop() {
   /* uint8_t cmd{getCommand()}; */
   
+	//TO DO: change protocol so that it sends back the received command and then sends th value, and update in accordance libNIM
 	switch(getCommand()) {
 		// Reset all
 		case RSTA:
@@ -46,19 +47,50 @@ void loop() {
 			break;
 
 		// Read counter 1
-		case GET1:
+		case XET1:
+#ifndef COUNTER_DEBUG_COMM
 			readCounter1();
-			for(uint8_t i{3}; i>=0; --i) Serial.write((counter1 >> (i*8)) & 255);
+#else
+			counter1 = 12345;
+#endif
+			/* for(uint8_t i{3}; i>=0; --i) Serial.write(static_cast<uint8_t>((counter1 >> (i*8)) & 255)); */ //Somehow doesn't work?
+			Serial.write(counter1 >> 24);
+			Serial.write((counter1 >> 16 ) & 255);
+			Serial.write((counter1 >> 8 ) & 255);
+			Serial.write(counter1 & 255);
 			Serial.write('\n');
 			break;
 
 		// Read counter 2
-		case GET2:
+		case XET2:
+#ifndef COUNTER_DEBUG_COMM
 			readCounter2();
-			for(uint8_t i{3}; i>=0; --i) Serial.write((counter2 >> (i*8)) & 255);
+#else
+			counter2 = 54321;
+#endif
+			/* for(uint8_t i{3}; i>=0; --i) Serial.write((counter2 >> (i*8)) & 255); */
+			Serial.write(counter2 >> 24);
+			Serial.write((counter2 >> 16 ) & 255);
+			Serial.write((counter2 >> 8 ) & 255);
+			Serial.write(counter2 & 255);
 			Serial.write('\n');
 			break;
-
+		case GET1:
+#ifndef COUNTER_DEBUG_COMM
+			readCounter1();
+#else
+			counter1 = 12345;
+#endif
+			Serial.println(counter1);
+			break;
+		case GET2:
+#ifndef COUNTER_DEBUG_COMM
+			readCounter2();
+#else
+			counter2 = 56789;
+#endif
+			Serial.println(counter2);
+			break;
 		// Remote control counter 1
 		case EN_1:
 			Serial.write(1);
@@ -71,8 +103,12 @@ void loop() {
 			Serial.write('\n');
 			break;
 		case SRLN:
-			for(uint8_t i{7}; i >=0; --i) Serial.write(0);			
+			/* for(uint8_t i{7}; i >=0; --i) Serial.write(0); */			
+			for(uint8_t i{}; i<7; ++i) Serial.write(0);
+			Serial.write(12);
 			Serial.write('\n');
+			break;
+		case RSRT:
 			break;
 		case COMMAND_ERR:
 			USART_Hard_Flush();
@@ -86,7 +122,7 @@ void loop() {
   
   //USART_Hard_Flush();
 
-#ifdef DISPLAY
+#ifdef COUNTER_DISPLAY
 	readCounter();
 	u8g2.firstPage();
 	do {
@@ -241,8 +277,9 @@ command getCommand() {
 			_buffer[i] = Serial.read();
 		}
 		USART_Hard_Flush();
-	}else{
-	return NO_COMMAND;
+	}
+	else{
+		return NO_COMMAND;
 	}
 
 	for(uint8_t j{}; j < COMMANDS_COUNT; ++j) {

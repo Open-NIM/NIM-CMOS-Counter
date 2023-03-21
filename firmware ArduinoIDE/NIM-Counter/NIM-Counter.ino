@@ -32,6 +32,7 @@
 #define U8G2_WITHOUT_FONT_ROTATION
 
 #include <avr/io.h>
+#include <util/atomic.h>
 #include <avr/interrupt.h>
 
 #include <Arduino.h>
@@ -43,8 +44,8 @@
 
 /* Parameters */
 #define COMMAND_LENGTH 4
-#define COMMANDS_COUNT 21
-#define INVALID_COMMAND 21 // Must be = COMMANDS_COUNT
+#define COMMANDS_COUNT 23
+#define INVALID_COMMAND 23 // Must be = COMMANDS_COUNT
 #define PASS COMMANDS_COUNT + 1
 #define USART_TIMEOUT 100
 
@@ -60,8 +61,8 @@
 /* Global variable */
 #ifdef DISPLAY
   //clock=D0, data=D1, cs=CS, reset=RST
-  U8G2_SSD1306_128X64_NONAME_F_3W_HW_SPI display1(U8G2_R0, CS1, RST1);
-  U8G2_SSD1306_128X64_NONAME_F_3W_HW_SPI display2(U8G2_R0, CS2, RST2);
+  U8G2_SSD1306_128X64_NONAME_F_3W_HW_SPI display1{U8G2_R0, CS1, RST1};
+  U8G2_SSD1306_128X64_NONAME_F_3W_HW_SPI display2{U8G2_R0, CS2, RST2};
 #endif
 
 const char commands[COMMANDS_COUNT][COMMAND_LENGTH] = {
@@ -301,29 +302,29 @@ void loop() {
     break;
     
     // Remote: reset counter 1.
-    case 12:
+    case 13:
       resetCounter1();
     break;
 
     // Remote: reset counter 2.
-    case 13:
+    case 14:
       resetCounter2();
     break;
     
     // Remote: read counter 1.
-    case 14:
+    case 15:
       readCounter();
       Serial.write(counter1); Serial.println();
     break;
 
     // Remote: read counter 2.
-    case 15:
+    case 16:
       readCounter();
       Serial.write(counter2); Serial.println();
     break;
     
     // Remote: remote enable counter 1.
-    case 16:
+    case 17:
       if(en_status_ch1 == SELECT_REMOTE) {
         digitalWrite(EN_CH1, HIGH);
         remote_en_ch1 = 1;
@@ -334,7 +335,7 @@ void loop() {
     break;
 
     // Remote: remote enable counter 2.
-    case 17:
+    case 18:
       if(en_status_ch2 == SELECT_REMOTE) {
         digitalWrite(EN_CH2, HIGH);
         remote_en_ch2 = 1;
@@ -345,7 +346,7 @@ void loop() {
     break;
 
     // Remote: remote disable counter 1.
-    case 18:
+    case 19:
       if(en_status_ch1 == SELECT_REMOTE) {
         digitalWrite(EN_CH1, LOW);
         remote_en_ch1 = 0;
@@ -356,7 +357,7 @@ void loop() {
     break;
 
     // Remote: remote disable counter 2.
-    case 19:
+    case 20:
       if(en_status_ch2 == SELECT_REMOTE) {
         digitalWrite(EN_CH2, LOW);
         remote_en_ch2 = 0;
@@ -367,12 +368,12 @@ void loop() {
     break;
 
     // Remote: get serial number.
-    case 20:
+    case 21:
       Serial.println(SERIAL_NUMBER);
     break;
 
     // Remote: get firmware version.
-    case 21:
+    case 22:
       Serial.println(FW_VERSION);
     break;
 
@@ -488,41 +489,122 @@ void resetCounter2(void) {
 }
 
 void readCounter(void) {
+ATOMIC_BLOCK(ATOMIC_RESTORESTATE){
   /* Latch counter1 data in internal register */
-  digitalWrite(_LATCH1, HIGH);
-  //delayMicroseconds(10);
-  digitalWrite(_LATCH1, LOW);
+	PORTC |= (1 << PC0); // Pin Latch1
+  asm volatile("nop\n\t"
+  "nop\n\t"
+  "nop\n\t"
+  "nop\n\t"
+  "nop\n\t"
+  ::);
+	PORTC &= ~(1 << PC0); // Pin Latch1
   
   /* Latch counter2 data in internal register */
-  digitalWrite(_LATCH2, HIGH);
-  //delayMicroseconds(10);
-  digitalWrite(_LATCH2, LOW);
-  
+	PORTC |= (1 << PC2); //Pin Latch2
+ 
+  asm volatile("nop\n\t"
+  "nop\n\t"
+  "nop\n\t"
+  "nop\n\t"
+  "nop\n\t"
+  ::);
+  	PORTC &= ~(1 << PC2); //Pin Latch2
+
+
+
   /* Read counter1*/
   PORTA = ~(1 << (_GAL_1));
-  counter1 = (uint32_t)(PINK);
+  asm volatile("nop\n\t"
+  "nop\n\t"
+  "nop\n\t"
+  "nop\n\t"
+  "nop\n\t"
+  ::);
+  volatile uint32_t buff{PINK};
+  counter1 = buff;
+  /* counter1 = (uint32_t)(PINK); */
 
   PORTA = ~(1 << (_GAU_1));
-  counter1 += ((uint32_t)(PINK) << 8);
+  asm volatile("nop\n\t"
+  "nop\n\t"
+  "nop\n\t"
+  "nop\n\t"
+  "nop\n\t"
+  ::);
+  buff = PINK;
+  counter1 += (buff << 8);
+  /* counter1 += ((uint32_t)(PINK) << 8); */
 
   PORTA = ~(1 << (_GBL_1));
-  counter1 += ((uint32_t)(PINK) << 16);
+  asm volatile("nop\n\t"
+  "nop\n\t"
+  "nop\n\t"
+  "nop\n\t"
+  "nop\n\t"
+  ::);
+  buff = PINK;
+  counter1 += (buff << 16);
+  /* counter1 += ((uint32_t)(PINK) << 16); */
 
   PORTA = ~(1 << (_GBU_1));
-  counter1 += ((uint32_t)(PINK) << 24);
+  asm volatile("nop\n\t"
+  "nop\n\t"
+  "nop\n\t"
+  "nop\n\t"
+  "nop\n\t"
+  ::);
+  buff = PINK;
+  counter1 += (buff << 32);
+  /* counter1 += ((uint32_t)(PINK) << 24); */
+
+
 
   /* Read counter2*/
   PORTA = ~(1 << (_GAL_2));
-  counter2 = (uint32_t)(PINK);
+  asm volatile("nop\n\t"
+  "nop\n\t"
+  "nop\n\t"
+  "nop\n\t"
+  "nop\n\t"
+  ::);
+  buff = PINK;
+  counter2 = buff;
+  //counter2 = (uint32_t)(PINK);
 
   PORTA = ~(1 << (_GAU_2));
-  counter2 += ((uint32_t)(PINK) << 8);
+  asm volatile("nop\n\t"
+  "nop\n\t"
+  "nop\n\t"
+  "nop\n\t"
+  "nop\n\t"
+  ::);
+  buff = PINK;
+  counter2 += (buff << 8);
+  //counter2 += ((uint32_t)(PINK) << 8);
 
   PORTA = ~(1 << (_GBL_2));
-  counter2 += ((uint32_t)(PINK) << 16);
+  asm volatile("nop\n\t"
+  "nop\n\t"
+  "nop\n\t"
+  "nop\n\t"
+  "nop\n\t"
+  ::);
+  buff = PINK;
+  counter2 += (buff << 16);
+  //counter2 += ((uint32_t)(PINK) << 16);
 
   PORTA = ~(1 << (_GBU_2));
-  counter2 += ((uint32_t)(PINK) << 24);
+  asm volatile("nop\n\t"
+  "nop\n\t"
+  "nop\n\t"
+  "nop\n\t"
+  "nop\n\t"
+  ::);
+  buff = PINK;
+  counter2 += (buff << 24);
+  //counter2 += ((uint32_t)(PINK) << 24);
+}
 }
 
 uint8_t getCommand(void) {

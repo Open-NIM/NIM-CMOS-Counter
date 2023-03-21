@@ -28,8 +28,7 @@
  * IS WITH YOU.  SHOULD THE PROGRAM PROVE DEFECTIVE, YOU ASSUME THE COST OF
  * ALL NECESSARY SERVICING, REPAIR OR CORRECTION.
  */
- 
-#ifndef _PIN_MAPPING_
+#pragma once
   /* Display pin definition */
   #define _RES_1 44   //res PL5 
   #define _DC_1 45    //dc PL4 
@@ -95,4 +94,3 @@
   #define P_RST1 19 //PD2 INT2
   #define C_RST2 20 //PD1 INT1
   #define P_RST2 21 //PD0 INT0
-#endif
